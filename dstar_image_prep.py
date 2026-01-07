@@ -27,15 +27,42 @@ def is_image_file(p: Path) -> bool:
 def add_watermark(img: Image.Image, text: str, margin: int = 10) -> Image.Image:
     if not text:
         return img
+
     img = img.copy()
     draw = ImageDraw.Draw(img)
-    font = ImageFont.load_default()
-    bbox = draw.textbbox((0, 0), text, font=font)
-    tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
-    x = img.width - tw - margin
-    y = img.height - th - margin
-    draw.text((x + 1, y + 1), text, font=font, fill=(0, 0, 0))
-    draw.text((x, y), text, font=font, fill=(255, 255, 255))
+
+    # Use Windows-safe Arial with a readable size
+    try:
+        font = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", 20)
+    except OSError:
+        font = ImageFont.load_default()
+
+    # Allow multi-line watermark (callsign + city)
+    lines = text.split("|")
+
+    # Measure total text block height
+    line_heights = []
+    line_widths = []
+
+    for line in lines:
+        bbox = draw.textbbox((0, 0), line, font=font)
+        w = bbox[2] - bbox[0]
+        h = bbox[3] - bbox[1]
+        line_widths.append(w)
+        line_heights.append(h)
+
+    total_height = sum(line_heights) + (len(lines) - 1) * 4
+    max_width = max(line_widths)
+
+    x = margin
+    y = img.height - total_height - margin
+
+    # Draw each line from top to bottom
+    for i, line in enumerate(lines):
+        draw.text((x + 1, y + 1), line, font=font, fill=(0, 0, 0))
+        draw.text((x, y), line, font=font, fill=(255, 255, 255))
+        y += line_heights[i] + 4
+
     return img
 
 
