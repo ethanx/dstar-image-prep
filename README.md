@@ -1,4 +1,4 @@
-\# D-STAR Image Prep
+## D-STAR Image Prep
 
 
 
@@ -6,7 +6,7 @@ A small Python utility for preparing \*\*ID-52 compatible D-STAR image files\*\*
 
 
 
-\## Features
+## Features
 
 \- Resizes images to 640×480
 
@@ -26,9 +26,11 @@ A small Python utility for preparing \*\*ID-52 compatible D-STAR image files\*\*
 ![Example D-STAR Image Output](screenshots/IMG_2403_output.jpg)
 
 
+\- Working to add simple GUI \*\*Coming Soon\*\*
 
 
-\## Requirements
+
+## Requirements
 
 \- Python 3.10+
 
@@ -36,7 +38,7 @@ A small Python utility for preparing \*\*ID-52 compatible D-STAR image files\*\*
 
 
 
-\## Setup
+## Setup
 
 ```bash
 
