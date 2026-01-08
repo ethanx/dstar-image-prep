@@ -39,7 +39,7 @@ def add_watermark(
     # Font (Windows-safe for now)
     try:
         font_main = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", 20)
-        font_caption = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", 18)
+        font_caption = font_main
     except OSError:
         font_main = ImageFont.load_default()
         font_caption = ImageFont.load_default()
@@ -52,8 +52,7 @@ def add_watermark(
             lines.append((line, font_main))
 
     # Optional caption line
-    if caption_text:
-        lines.append((caption_text, font_caption))
+    
 
     # Measure total block
     line_heights = []
@@ -78,6 +77,18 @@ def add_watermark(
         draw.text((x + 1, y + 1), text, font=font, fill=(0, 0, 0))
         draw.text((x, y), text, font=font, fill=(255, 255, 255))
         y += h + 4
+      
+     # Draw caption in bottom-right
+    if caption_text:
+        bbox = draw.textbbox((0, 0), caption_text, font=font_main)
+        text_w = bbox[2] - bbox[0]
+        text_h = bbox[3] - bbox[1]
+
+        x = img.width - text_w - margin
+        y = img.height - text_h - margin
+
+        draw.text((x + 1, y + 1), caption_text, font=font_main, fill=(0, 0, 0))
+        draw.text((x, y), caption_text, font=font_main, fill=(255, 255, 255))
 
     return img
 
