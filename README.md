@@ -66,11 +66,20 @@ python dstar_gui.py
 
 ## Setup
 
+```bash
+
 python -m venv .venv
+
+```
+```bash
 
 .\\.venv\\Scripts\\Activate.ps1
 
+```
+```bash
+
 python -m pip install pillow
 
+```
 
 
