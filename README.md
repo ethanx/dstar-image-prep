@@ -49,7 +49,10 @@ The GUI allows you to:
 From the project folder, activate the virtual environment and run:
 
 ```bash
+
 python dstar_gui.py
+
+```
 
 
 
@@ -62,8 +65,6 @@ python dstar_gui.py
 
 
 ## Setup
-
-```bash
 
 python -m venv .venv
 
