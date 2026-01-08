@@ -33,6 +33,8 @@ This project includes a simple graphical user interface (GUI) for operators who 
 The GUI is designed for non-technical users and field operations while still producing fully
 D-STAR–compatible images for radios such as the Icom ID-52.
 
+![GUI Window](screenshots/gui_screenshot.png)
+
 ### Features
 
 The GUI allows you to:

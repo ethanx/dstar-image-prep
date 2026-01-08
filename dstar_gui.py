@@ -64,7 +64,7 @@ class App(tk.Tk):
         ttk.Label(settings, text="Max KB:").grid(row=2, column=0, sticky="w", **pad)
         ttk.Entry(settings, textvariable=self.max_kb_var, width=12).grid(row=2, column=1, sticky="w", **pad)
 
-        ttk.Label(settings, text="Example: KF0VOX|Denver, CO").grid(row=2, column=2, columnspan=2, sticky="w", **pad)
+        ttk.Label(settings, text="Example: K0PRA|Parker, Colorado").grid(row=2, column=2, columnspan=2, sticky="w", **pad)
 
         settings.columnconfigure(1, weight=1)
 
