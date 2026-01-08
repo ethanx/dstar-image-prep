@@ -24,28 +24,43 @@ def is_image_file(p: Path) -> bool:
     return p.suffix.lower() in {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp"}
 
 
-def add_watermark(img: Image.Image, text: str, margin: int = 10) -> Image.Image:
-    if not text:
+def add_watermark(
+    img: Image.Image,
+    identity_text: str,
+    caption_text: str = "",
+    margin: int = 14,
+) -> Image.Image:
+    if not identity_text and not caption_text:
         return img
 
     img = img.copy()
     draw = ImageDraw.Draw(img)
 
-    # Use Windows-safe Arial with a readable size
+    # Font (Windows-safe for now)
     try:
-        font = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", 20)
+        font_main = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", 20)
+        font_caption = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", 18)
     except OSError:
-        font = ImageFont.load_default()
+        font_main = ImageFont.load_default()
+        font_caption = ImageFont.load_default()
 
-    # Allow multi-line watermark (callsign + city)
-    lines = text.split("|")
+    lines = []
 
-    # Measure total text block height
+    # Identity block (callsign | location)
+    if identity_text:
+        for line in identity_text.split("|"):
+            lines.append((line, font_main))
+
+    # Optional caption line
+    if caption_text:
+        lines.append((caption_text, font_caption))
+
+    # Measure total block
     line_heights = []
     line_widths = []
 
-    for line in lines:
-        bbox = draw.textbbox((0, 0), line, font=font)
+    for text, font in lines:
+        bbox = draw.textbbox((0, 0), text, font=font)
         w = bbox[2] - bbox[0]
         h = bbox[3] - bbox[1]
         line_widths.append(w)
@@ -54,14 +69,15 @@ def add_watermark(img: Image.Image, text: str, margin: int = 10) -> Image.Image:
     total_height = sum(line_heights) + (len(lines) - 1) * 4
     max_width = max(line_widths)
 
+    # Bottom-left placement
     x = margin
     y = img.height - total_height - margin
 
-    # Draw each line from top to bottom
-    for i, line in enumerate(lines):
-        draw.text((x + 1, y + 1), line, font=font, fill=(0, 0, 0))
-        draw.text((x, y), line, font=font, fill=(255, 255, 255))
-        y += line_heights[i] + 4
+    # Draw lines
+    for (text, font), h in zip(lines, line_heights):
+        draw.text((x + 1, y + 1), text, font=font, fill=(0, 0, 0))
+        draw.text((x, y), text, font=font, fill=(255, 255, 255))
+        y += h + 4
 
     return img
 
@@ -154,16 +170,39 @@ def build_output_name(in_path: Path, prefix: str, suffix: str) -> str:
 
 
 def process_one(in_path: Path, out_dir: Path, size: Tuple[int, int], max_kb: int,
-                mode: str, watermark: str, prefix: str, suffix: str) -> None:
+                mode: str, watermark: str, caption: str, prefix: str, suffix: str) -> None:
     out_name = build_output_name(in_path, prefix, suffix)
     out_path = out_dir / out_name
 
     with Image.open(in_path) as img:
         img2 = resize_to_fit(img, size=size, mode=mode)
-        img2 = add_watermark(img2, watermark)
+        img2 = add_watermark(img2, watermark, caption)
         q, b = save_jpeg_under_limit(img2, out_path, max_kb=max_kb)
 
     print(f"OK  {in_path.name} -> {out_path.name}  ({b/1024:.1f} KB, quality={q}, {size[0]}x{size[1]}, mode={mode})")
+
+def run_convert(input_path: str, out_dir: str = "OUT", size=(640, 480), max_kb: int = 200,
+                mode: str = "cover", watermark: str = "", caption: str = "", prefix: str = "", suffix: str = "") -> None:
+    """
+    Programmatic entry point for GUI usage.
+    Accepts a file path OR a folder path.
+    """
+    in_path = Path(input_path).expanduser().resolve()
+    out_dir_path = Path(out_dir).expanduser().resolve()
+    ensure_output_dir(out_dir_path)
+
+    if in_path.is_dir():
+        files = [p for p in sorted(in_path.iterdir()) if p.is_file() and is_image_file(p)]
+        if not files:
+            raise RuntimeError(f"No supported image files found in folder: {in_path}")
+        for f in files:
+            process_one(f, out_dir_path, size, max_kb, mode, watermark, caption, prefix, suffix)
+    elif in_path.is_file():
+        if not is_image_file(in_path):
+            raise RuntimeError(f"Unsupported image type: {in_path.suffix}")
+        process_one(in_path, out_dir_path, size, max_kb, mode, watermark, caption, prefix, suffix)
+    else:
+        raise RuntimeError(f"Input not found: {in_path}")
 
 
 def main() -> None:
@@ -175,6 +214,7 @@ def main() -> None:
     ap.add_argument("--mode", choices=["cover", "contain", "exact"], default="cover",
                     help="cover=crop, contain=letterbox, exact=distort. Default cover.")
     ap.add_argument("--watermark", default="", help="Watermark text (e.g., KF0VOX 73)")
+    ap.add_argument("--caption", default="", help="Optional caption line (landmark, elevation, event name)",)
     ap.add_argument("--prefix", default="", help="Prefix added to output filename")
     ap.add_argument("--suffix", default="", help="Suffix added to output filename")
     args = ap.parse_args()
@@ -188,11 +228,11 @@ def main() -> None:
         if not files:
             raise SystemExit(f"No supported image files in: {in_path}")
         for f in files:
-            process_one(f, out_dir, args.size, args.max_kb, args.mode, args.watermark, args.prefix, args.suffix)
+            process_one(f, out_dir, args.size, args.max_kb, args.mode, args.watermark, args.caption, args.prefix, args.suffix)
     elif in_path.is_file():
         if not is_image_file(in_path):
             raise SystemExit(f"Unsupported image type: {in_path.suffix}")
-        process_one(in_path, out_dir, args.size, args.max_kb, args.mode, args.watermark, args.prefix, args.suffix)
+        process_one(in_path, out_dir, args.size, args.max_kb, args.mode, args.watermark, args.caption, args.prefix, args.suffix)
     else:
         raise SystemExit(f"Input not found: {in_path}")
 
