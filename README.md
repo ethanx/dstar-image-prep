@@ -53,10 +53,6 @@ python dstar_gui.py
 
 
 
-\- Portable USB program \*\*Coming Soon\*\*
-
-
-
 ## Requirements
 
 \- Python 3.10+
